@@ -1,0 +1,659 @@
+-- Freeze Trade Script GUI (PC & Mobile Compatible)
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- Get local player
+local player = Players.LocalPlayer
+
+-- Create the main GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FreezeTradeGUI"
+ScreenGui.Parent = game.CoreGui or player:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true  -- Important for mobile
+
+-- Main frame (smaller size)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 300, 0, 280)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -140)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)  -- Light black
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+
+-- Outline
+local Outline = Instance.new("UIStroke")
+Outline.Color = Color3.fromRGB(60, 60, 70)
+Outline.Thickness = 2
+Outline.Parent = MainFrame
+
+-- Rounded corners
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = MainFrame
+
+-- Title bar (for dragging)
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
+TitleBar.Position = UDim2.new(0, 0, 0, 0)
+TitleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+TitleBar.BorderSizePixel = 0
+TitleBar.ZIndex = 2
+
+local TitleBarCorner = Instance.new("UICorner")
+TitleBarCorner.CornerRadius = UDim.new(0, 10, 0, 0)
+TitleBarCorner.Parent = TitleBar
+
+-- Title bar outline
+local TitleBarOutline = Instance.new("UIStroke")
+TitleBarOutline.Color = Color3.fromRGB(60, 60, 70)
+TitleBarOutline.Thickness = 1
+TitleBarOutline.Parent = TitleBar
+
+TitleBar.Parent = MainFrame
+
+-- Title text
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.Size = UDim2.new(1, -70, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "FREEZE TRADE"
+Title.TextColor3 = Color3.fromRGB(220, 220, 230)
+Title.TextSize = 14
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.ZIndex = 3
+Title.Parent = TitleBar
+
+-- Hide button
+local HideButton = Instance.new("TextButton")
+HideButton.Name = "HideButton"
+HideButton.Size = UDim2.new(0, 25, 0, 25)
+HideButton.Position = UDim2.new(1, -60, 0.5, -12.5)
+HideButton.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+HideButton.BorderSizePixel = 0
+HideButton.Text = "_"
+HideButton.TextColor3 = Color3.fromRGB(220, 220, 230)
+HideButton.TextSize = 16
+HideButton.Font = Enum.Font.GothamBold
+HideButton.ZIndex = 3
+
+local HideButtonCorner = Instance.new("UICorner")
+HideButtonCorner.CornerRadius = UDim.new(0, 5)
+HideButtonCorner.Parent = HideButton
+
+-- Hide button outline
+local HideButtonOutline = Instance.new("UIStroke")
+HideButtonOutline.Color = Color3.fromRGB(80, 80, 90)
+HideButtonOutline.Thickness = 1
+HideButtonOutline.Parent = HideButton
+
+-- Close button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 25, 0, 25)
+CloseButton.Position = UDim2.new(1, -30, 0.5, -12.5)
+CloseButton.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+CloseButton.BorderSizePixel = 0
+CloseButton.Text = "×"
+CloseButton.TextColor3 = Color3.fromRGB(220, 220, 230)
+CloseButton.TextSize = 16
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.ZIndex = 3
+
+local CloseButtonCorner = Instance.new("UICorner")
+CloseButtonCorner.CornerRadius = UDim.new(0, 5)
+CloseButtonCorner.Parent = CloseButton
+
+-- Close button outline
+local CloseButtonOutline = Instance.new("UIStroke")
+CloseButtonOutline.Color = Color3.fromRGB(80, 80, 90)
+CloseButtonOutline.Thickness = 1
+CloseButtonOutline.Parent = CloseButton
+
+HideButton.Parent = TitleBar
+CloseButton.Parent = TitleBar
+
+MainFrame.Parent = ScreenGui
+
+-- Content area
+local Content = Instance.new("Frame")
+Content.Name = "Content"
+Content.Size = UDim2.new(1, -20, 1, -50)
+Content.Position = UDim2.new(0, 10, 0, 40)
+Content.BackgroundTransparency = 1
+Content.Parent = MainFrame
+
+-- SEARCH PLAYER SECTION
+local SearchLabel = Instance.new("TextLabel")
+SearchLabel.Name = "SearchLabel"
+SearchLabel.Size = UDim2.new(1, 0, 0, 20)
+SearchLabel.Position = UDim2.new(0, 0, 0, 0)
+SearchLabel.BackgroundTransparency = 1
+SearchLabel.Text = "SEARCH PLAYER:"
+SearchLabel.TextColor3 = Color3.fromRGB(160, 160, 170)
+SearchLabel.TextSize = 11
+SearchLabel.Font = Enum.Font.Gotham
+SearchLabel.TextXAlignment = Enum.TextXAlignment.Left
+SearchLabel.Parent = Content
+
+-- Search box
+local SearchBox = Instance.new("TextBox")
+SearchBox.Name = "SearchBox"
+SearchBox.Size = UDim2.new(1, 0, 0, 30)
+SearchBox.Position = UDim2.new(0, 0, 0, 20)
+SearchBox.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+SearchBox.BorderSizePixel = 0
+SearchBox.Text = ""
+SearchBox.PlaceholderText = "Enter username..."
+SearchBox.TextColor3 = Color3.fromRGB(220, 220, 230)
+SearchBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 130)
+SearchBox.TextSize = 13
+SearchBox.Font = Enum.Font.Gotham
+SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+SearchBox.ClearTextOnFocus = false
+
+local SearchBoxCorner = Instance.new("UICorner")
+SearchBoxCorner.CornerRadius = UDim.new(0, 6)
+SearchBoxCorner.Parent = SearchBox
+
+-- Search box outline
+local SearchBoxOutline = Instance.new("UIStroke")
+SearchBoxOutline.Color = Color3.fromRGB(60, 60, 70)
+SearchBoxOutline.Thickness = 1
+SearchBoxOutline.Parent = SearchBox
+
+local SearchBoxPadding = Instance.new("UIPadding")
+SearchBoxPadding.PaddingLeft = UDim.new(0, 10)
+SearchBoxPadding.Parent = SearchBox
+
+SearchBox.Parent = Content
+
+-- Player info display
+local PlayerInfoFrame = Instance.new("Frame")
+PlayerInfoFrame.Name = "PlayerInfoFrame"
+PlayerInfoFrame.Size = UDim2.new(1, 0, 0, 50)
+PlayerInfoFrame.Position = UDim2.new(0, 0, 0, 60)
+PlayerInfoFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+PlayerInfoFrame.BorderSizePixel = 0
+PlayerInfoFrame.Visible = false
+
+local PlayerInfoCorner = Instance.new("UICorner")
+PlayerInfoCorner.CornerRadius = UDim.new(0, 6)
+PlayerInfoCorner.Parent = PlayerInfoFrame
+
+-- Player info outline
+local PlayerInfoOutline = Instance.new("UIStroke")
+PlayerInfoOutline.Color = Color3.fromRGB(60, 60, 70)
+PlayerInfoOutline.Thickness = 1
+PlayerInfoOutline.Parent = PlayerInfoFrame
+
+-- Profile picture
+local ProfilePicture = Instance.new("ImageLabel")
+ProfilePicture.Name = "ProfilePicture"
+ProfilePicture.Size = UDim2.new(0, 36, 0, 36)
+ProfilePicture.Position = UDim2.new(0, 7, 0.5, -18)
+ProfilePicture.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+ProfilePicture.BorderSizePixel = 0
+ProfilePicture.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+
+local ProfilePictureCorner = Instance.new("UICorner")
+ProfilePictureCorner.CornerRadius = UDim.new(1, 0)
+ProfilePictureCorner.Parent = ProfilePicture
+
+-- Profile picture outline
+local ProfilePictureOutline = Instance.new("UIStroke")
+ProfilePictureOutline.Color = Color3.fromRGB(60, 60, 70)
+ProfilePictureOutline.Thickness = 2
+ProfilePictureOutline.Parent = ProfilePicture
+
+ProfilePicture.Parent = PlayerInfoFrame
+
+-- Player name
+local PlayerName = Instance.new("TextLabel")
+PlayerName.Name = "PlayerName"
+PlayerName.Size = UDim2.new(1, -50, 0.5, 0)
+PlayerName.Position = UDim2.new(0, 50, 0, 5)
+PlayerName.BackgroundTransparency = 1
+PlayerName.Text = "Player Name"
+PlayerName.TextColor3 = Color3.fromRGB(230, 230, 240)
+PlayerName.TextSize = 14
+PlayerName.Font = Enum.Font.Gotham
+PlayerName.TextXAlignment = Enum.TextXAlignment.Left
+PlayerName.Parent = PlayerInfoFrame
+
+-- Player ID
+local PlayerID = Instance.new("TextLabel")
+PlayerID.Name = "PlayerID"
+PlayerID.Size = UDim2.new(1, -50, 0.5, 0)
+PlayerID.Position = UDim2.new(0, 50, 0.5, 0)
+PlayerID.BackgroundTransparency = 1
+PlayerID.Text = "ID: "
+PlayerID.TextColor3 = Color3.fromRGB(160, 160, 170)
+PlayerID.TextSize = 11
+PlayerID.Font = Enum.Font.Gotham
+PlayerID.TextXAlignment = Enum.TextXAlignment.Left
+PlayerID.Parent = PlayerInfoFrame
+
+PlayerInfoFrame.Parent = Content
+
+-- Variables
+local freezeEnabled = false
+local acceptEnabled = false
+local selectedPlayer = nil
+local guiVisible = true
+local dragging = false
+local dragStart, startPos
+local isMobile = UserInputService.TouchEnabled
+
+-- Function to load player profile picture
+local function loadPlayerProfile(userId)
+    local success, result = pcall(function()
+        return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+    end)
+    
+    if success and result then
+        ProfilePicture.Image = result
+    else
+        ProfilePicture.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+    end
+end
+
+-- Function to search for player
+local function searchPlayer(username)
+    local success, result = pcall(function()
+        return Players:GetUserIdFromNameAsync(username)
+    end)
+    
+    if success and result then
+        selectedPlayer = {
+            Name = username,
+            UserId = result
+        }
+        
+        PlayerInfoFrame.Visible = true
+        PlayerName.Text = username
+        PlayerID.Text = "ID: " .. result
+        loadPlayerProfile(result)
+    else
+        PlayerInfoFrame.Visible = false
+        selectedPlayer = nil
+        PlayerName.Text = "Player Name"
+        PlayerID.Text = "ID: "
+        ProfilePicture.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+    end
+end
+
+-- Search when Enter is pressed or search box loses focus
+SearchBox.FocusLost:Connect(function(enterPressed)
+    if SearchBox.Text ~= "" then
+        searchPlayer(SearchBox.Text)
+    end
+end)
+
+-- TOGGLE SECTION
+local ToggleSectionLabel = Instance.new("TextLabel")
+ToggleSectionLabel.Name = "ToggleSectionLabel"
+ToggleSectionLabel.Size = UDim2.new(1, 0, 0, 20)
+ToggleSectionLabel.Position = UDim2.new(0, 0, 0, 120)
+ToggleSectionLabel.BackgroundTransparency = 1
+ToggleSectionLabel.Text = "FEATURES:"
+ToggleSectionLabel.TextColor3 = Color3.fromRGB(160, 160, 170)
+ToggleSectionLabel.TextSize = 11
+ToggleSectionLabel.Font = Enum.Font.Gotham
+ToggleSectionLabel.TextXAlignment = Enum.TextXAlignment.Left
+ToggleSectionLabel.Parent = Content
+
+-- Function to create toggle
+local function createToggle(name, labelText, yPosition)
+    local ToggleFrame = Instance.new("Frame")
+    ToggleFrame.Name = name .. "ToggleFrame"
+    ToggleFrame.Size = UDim2.new(1, 0, 0, 35)
+    ToggleFrame.Position = UDim2.new(0, 0, 0, yPosition)
+    ToggleFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    ToggleFrame.BorderSizePixel = 0
+    
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(0, 6)
+    ToggleCorner.Parent = ToggleFrame
+    
+    -- Toggle frame outline
+    local ToggleFrameOutline = Instance.new("UIStroke")
+    ToggleFrameOutline.Color = Color3.fromRGB(60, 60, 70)
+    ToggleFrameOutline.Thickness = 1
+    ToggleFrameOutline.Parent = ToggleFrame
+    
+    -- Toggle switch
+    local ToggleButton = Instance.new("TextButton")
+    ToggleButton.Name = "ToggleButton"
+    ToggleButton.Size = UDim2.new(0, 50, 0, 25)
+    ToggleButton.Position = UDim2.new(1, -60, 0.5, -12.5)
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 70)  -- Dark gray for OFF
+    ToggleButton.BorderSizePixel = 0
+    ToggleButton.Text = ""
+    ToggleButton.AutoButtonColor = false
+    
+    local ToggleButtonCorner = Instance.new("UICorner")
+    ToggleButtonCorner.CornerRadius = UDim.new(1, 0)
+    ToggleButtonCorner.Parent = ToggleButton
+    
+    -- Toggle button outline
+    local ToggleButtonOutline = Instance.new("UIStroke")
+    ToggleButtonOutline.Color = Color3.fromRGB(80, 80, 90)
+    ToggleButtonOutline.Thickness = 1
+    ToggleButtonOutline.Parent = ToggleButton
+    
+    -- Toggle circle
+    local ToggleCircle = Instance.new("Frame")
+    ToggleCircle.Name = "ToggleCircle"
+    ToggleCircle.Size = UDim2.new(0, 18, 0, 18)
+    ToggleCircle.Position = UDim2.new(0, 3, 0.5, -9)
+    ToggleCircle.BackgroundColor3 = Color3.fromRGB(220, 220, 230)
+    ToggleCircle.BorderSizePixel = 0
+    
+    local ToggleCircleCorner = Instance.new("UICorner")
+    ToggleCircleCorner.CornerRadius = UDim.new(1, 0)
+    ToggleCircleCorner.Parent = ToggleCircle
+    
+    -- Toggle circle outline
+    local ToggleCircleOutline = Instance.new("UIStroke")
+    ToggleCircleOutline.Color = Color3.fromRGB(40, 40, 45)
+    ToggleCircleOutline.Thickness = 1
+    ToggleCircleOutline.Parent = ToggleCircle
+    
+    ToggleCircle.Parent = ToggleButton
+    
+    -- Status text (ON/OFF)
+    local StatusText = Instance.new("TextLabel")
+    StatusText.Name = "StatusText"
+    StatusText.Size = UDim2.new(0, 40, 0, 20)
+    StatusText.Position = UDim2.new(1, -110, 0.5, -10)
+    StatusText.BackgroundTransparency = 1
+    StatusText.Text = "OFF"
+    StatusText.TextColor3 = Color3.fromRGB(200, 100, 100)  -- Red for OFF
+    StatusText.TextSize = 11
+    StatusText.Font = Enum.Font.GothamBold
+    StatusText.TextXAlignment = Enum.TextXAlignment.Right
+    StatusText.Parent = ToggleFrame
+    
+    -- Label
+    local ToggleLabel = Instance.new("TextLabel")
+    ToggleLabel.Name = "ToggleLabel"
+    ToggleLabel.Size = UDim2.new(1, -120, 1, 0)
+    ToggleLabel.Position = UDim2.new(0, 10, 0, 0)
+    ToggleLabel.BackgroundTransparency = 1
+    ToggleLabel.Text = labelText
+    ToggleLabel.TextColor3 = Color3.fromRGB(220, 220, 230)
+    ToggleLabel.TextSize = 13
+    ToggleLabel.Font = Enum.Font.Gotham
+    ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    ToggleLabel.Parent = ToggleFrame
+    
+    ToggleButton.Parent = ToggleFrame
+    ToggleFrame.Parent = Content
+    
+    return ToggleFrame, ToggleButton, ToggleCircle, StatusText
+end
+
+-- Create toggles
+local FreezeToggleFrame, FreezeToggleButton, FreezeToggleCircle, FreezeStatus = createToggle("Freeze", "Freeze victims screen", 145)
+local AcceptToggleFrame, AcceptToggleButton, AcceptToggleCircle, AcceptStatus = createToggle("Accept", "Auto accept trade", 185)
+
+-- Function to animate toggle with GREEN color
+local function animateToggle(toggleButton, toggleCircle, statusText, isOn)
+    if isOn then
+        -- Move circle to right and change to GREEN
+        toggleCircle:TweenPosition(UDim2.new(1, -21, 0.5, -9), "Out", "Quad", 0.2)
+        toggleButton:TweenBackgroundColor3(Color3.fromRGB(80, 180, 80), "Out", "Quad", 0.2)  -- GREEN
+        statusText.Text = "ON"
+        statusText.TextColor3 = Color3.fromRGB(80, 220, 80)  -- Bright green
+    else
+        -- Move circle to left and change to dark gray
+        toggleCircle:TweenPosition(UDim2.new(0, 3, 0.5, -9), "Out", "Quad", 0.2)
+        toggleButton:TweenBackgroundColor3(Color3.fromRGB(60, 60, 70), "Out", "Quad", 0.2)  -- Dark gray
+        statusText.Text = "OFF"
+        statusText.TextColor3 = Color3.fromRGB(200, 100, 100)  -- Red
+    end
+end
+
+-- Toggle functionality with GREEN effects
+local function toggleFreeze()
+    if selectedPlayer then
+        freezeEnabled = not freezeEnabled
+        animateToggle(FreezeToggleButton, FreezeToggleCircle, FreezeStatus, freezeEnabled)
+        
+        -- GREEN visual feedback
+        if freezeEnabled then
+            print("[Freeze] ✅ GREEN - Enabled for:", selectedPlayer.Name)
+            -- Visual green effect
+            ProfilePictureOutline.Color = Color3.fromRGB(80, 220, 80)
+        else
+            print("[Freeze] ❌ Disabled for:", selectedPlayer.Name)
+            -- Reset outline
+            ProfilePictureOutline.Color = Color3.fromRGB(60, 60, 70)
+        end
+    else
+        print("[Error] Please select a player first!")
+    end
+end
+
+local function toggleAccept()
+    if selectedPlayer then
+        acceptEnabled = not acceptEnabled
+        animateToggle(AcceptToggleButton, AcceptToggleCircle, AcceptStatus, acceptEnabled)
+        
+        -- GREEN visual feedback
+        if acceptEnabled then
+            print("[Auto Accept] ✅ GREEN - Enabled for:", selectedPlayer.Name)
+            -- Visual green effect
+            PlayerInfoOutline.Color = Color3.fromRGB(80, 220, 80)
+        else
+            print("[Auto Accept] ❌ Disabled for:", selectedPlayer.Name)
+            -- Reset outline
+            PlayerInfoOutline.Color = Color3.fromRGB(60, 60, 70)
+        end
+    else
+        print("[Error] Please select a player first!")
+    end
+end
+
+-- Connect toggle clicks
+FreezeToggleButton.MouseButton1Click:Connect(toggleFreeze)
+AcceptToggleButton.MouseButton1Click:Connect(toggleAccept)
+
+-- Hover effects for toggle frames
+local function setupHoverEffects(toggleFrame)
+    toggleFrame.MouseEnter:Connect(function()
+        if guiVisible then
+            toggleFrame:TweenBackgroundColor3(Color3.fromRGB(35, 35, 40), "Out", "Quad", 0.2)
+        end
+    end)
+    
+    toggleFrame.MouseLeave:Connect(function()
+        if guiVisible then
+            toggleFrame:TweenBackgroundColor3(Color3.fromRGB(30, 30, 35), "Out", "Quad", 0.2)
+        end
+    end)
+end
+
+setupHoverEffects(FreezeToggleFrame)
+setupHoverEffects(AcceptToggleFrame)
+
+-- Hide/Show functionality
+HideButton.MouseButton1Click:Connect(function()
+    if guiVisible then
+        -- Hide GUI
+        MainFrame:TweenSize(UDim2.new(0, 50, 0, 50), "Out", "Quad", 0.3)
+        MainFrame:TweenPosition(UDim2.new(1, -60, 0, 10), "Out", "Quad", 0.3)
+        
+        -- Change button
+        HideButton.Text = "□"
+        HideButton.Size = UDim2.new(0, 40, 0, 40)
+        HideButton.Position = UDim2.new(0.5, -20, 0.5, -20)
+        HideButton.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+        
+        guiVisible = false
+    else
+        -- Show GUI
+        MainFrame:TweenSize(UDim2.new(0, 300, 0, 280), "Out", "Quad", 0.3)
+        MainFrame:TweenPosition(UDim2.new(0.5, -150, 0.5, -140), "Out", "Quad", 0.3)
+        
+        -- Reset button
+        HideButton.Text = "_"
+        HideButton.Size = UDim2.new(0, 25, 0, 25)
+        HideButton.Position = UDim2.new(1, -60, 0.5, -12.5)
+        HideButton.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+        
+        guiVisible = true
+    end
+end)
+
+-- Close button functionality
+CloseButton.MouseButton1Click:Connect(function()
+    MainFrame:TweenPosition(UDim2.new(0.5, -150, 1.5, -140), "Out", "Quad", 0.3)
+    wait(0.3)
+    ScreenGui:Destroy()
+end)
+
+-- Button hover effects
+local function setupButtonEffects(button, outline)
+    button.MouseEnter:Connect(function()
+        button.BackgroundColor3 = Color3.fromRGB(55, 55, 60)
+        if outline then
+            outline.Color = Color3.fromRGB(100, 100, 110)
+        end
+    end)
+    
+    button.MouseLeave:Connect(function()
+        button.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+        if outline then
+            outline.Color = Color3.fromRGB(80, 80, 90)
+        end
+    end)
+end
+
+setupButtonEffects(HideButton, HideButtonOutline)
+setupButtonEffects(CloseButton, CloseButtonOutline)
+
+-- PC & MOBILE DRAGGING SYSTEM
+local function updateDrag(input)
+    local delta
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        delta = input.Position - dragStart
+    elseif input.UserInputType == Enum.UserInputType.Touch then
+        delta = input.Position - dragStart
+    end
+    
+    if delta then
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end
+
+-- Function to start dragging
+local function startDragging(input)
+    if guiVisible then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+    end
+end
+
+-- Function to stop dragging
+local function stopDragging()
+    dragging = false
+end
+
+-- Set up drag for TitleBar (PC and Mobile)
+TitleBar.InputBegan:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or 
+        input.UserInputType == Enum.UserInputType.Touch) then
+        startDragging(input)
+        
+        local connection
+        connection = input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                stopDragging()
+                connection:Disconnect()
+            end
+        end)
+    end
+end)
+
+-- Also allow dragging from the title text
+Title.InputBegan:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or 
+        input.UserInputType == Enum.UserInputType.Touch) then
+        startDragging(input)
+        
+        local connection
+        connection = input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                stopDragging()
+                connection:Disconnect()
+            end
+        end)
+    end
+end)
+
+-- Update drag position
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
+                     input.UserInputType == Enum.UserInputType.Touch) then
+        updateDrag(input)
+    end
+end)
+
+-- Mobile touch support for buttons (prevent accidental drags)
+local function setupMobileButton(button)
+    if isMobile then
+        button.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch then
+                -- Consume the touch event to prevent dragging
+                input:Capture()
+            end
+        end)
+    end
+end
+
+setupMobileButton(HideButton)
+setupMobileButton(CloseButton)
+setupMobileButton(FreezeToggleButton)
+setupMobileButton(AcceptToggleButton)
+setupMobileButton(SearchBox)
+
+-- Mobile: Make search box easier to tap
+if isMobile then
+    SearchBox.Size = UDim2.new(1, 0, 0, 40)
+    SearchBox.TextSize = 14
+    SearchBoxPadding.PaddingLeft = UDim.new(0, 15)
+end
+
+print("======================================")
+print("FREEZE TRADE SCRIPT GUI LOADED!")
+print("======================================")
+print("✓ Light black theme with outlines")
+print("✓ Green toggle effects when ON")
+print("✓ PC & Mobile compatible dragging")
+print("✓ Player search with profile pictures")
+print("✓ Two feature toggles")
+print("✓ Hide/Show functionality")
+print("")
+print("CONTROLS:")
+print("- Drag: Click/Touch top bar")
+print("- Hide: Click '_' button")
+print("- Close: Click '×' button")
+print("- Search: Type username, press Enter")
+print("- Toggle: Click switches (turns GREEN)")
+print("")
+print("FEATURES:")
+print("1. Freeze victims screen")
+print("2. Auto accept trade")
+print("======================================")
+print("Status: GUI is ready!")
+print("Platform: " .. (isMobile and "Mobile" or "PC"))
+print("======================================")
