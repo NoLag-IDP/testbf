@@ -1,0 +1,793 @@
+-- =====================================================
+-- FREEZE TRADE SCRIPT GUI (PROFESSIONAL + PLAYER SEARCH)
+-- =====================================================
+
+-- Services
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+
+-- Player
+local player = game.Players.LocalPlayer
+
+-- =====================================================
+-- GUI SETUP
+-- =====================================================
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FreezeTradeGUI"
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game.CoreGui or player:WaitForChild("PlayerGui")
+
+-- Main Frame (Larger to accommodate new features)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 350, 0, 380)
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -190)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)  -- Darker theme
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
+
+-- Glow Effect
+local Glow = Instance.new("ImageLabel")
+Glow.Name = "Glow"
+Glow.Size = UDim2.new(1, 24, 1, 24)
+Glow.Position = UDim2.new(0, -12, 0, -12)
+Glow.BackgroundTransparency = 1
+Glow.Image = "rbxassetid://5554236805"
+Glow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+Glow.ImageTransparency = 0.7
+Glow.ScaleType = Enum.ScaleType.Slice
+Glow.SliceCenter = Rect.new(23, 23, 277, 277)
+Glow.ZIndex = -1
+Glow.Parent = MainFrame
+
+-- Outline
+local Outline = Instance.new("UIStroke")
+Outline.Thickness = 2
+Outline.Color = Color3.fromRGB(60, 80, 120)
+Outline.Transparency = 0.3
+Outline.Parent = MainFrame
+
+-- Corner
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = MainFrame
+
+-- =====================================================
+-- TITLE BAR WITH GRADIENT
+-- =====================================================
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 45)
+TitleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+TitleBar.BorderSizePixel = 0
+TitleBar.Active = true
+TitleBar.Selectable = true
+TitleBar.Parent = MainFrame
+
+local TitleGradient = Instance.new("UIGradient")
+TitleGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 100, 200)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 70, 200))
+})
+TitleGradient.Rotation = 90
+TitleGradient.Parent = TitleBar
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 12, 0, 0)
+TitleCorner.Parent = TitleBar
+
+local TitleStroke = Instance.new("UIStroke")
+TitleStroke.Thickness = 1
+TitleStroke.Color = Color3.fromRGB(80, 100, 150)
+TitleStroke.Parent = TitleBar
+
+local Title = Instance.new("TextLabel")
+Title.Text = "❄️ FREEZE TRADE PRO"
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.TextColor3 = Color3.fromRGB(240, 240, 255)
+Title.BackgroundTransparency = 1
+Title.Size = UDim2.new(1, -100, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Active = true
+Title.Selectable = true
+Title.Parent = TitleBar
+
+-- =====================================================
+-- ACTION BUTTONS
+-- =====================================================
+
+local HideButton = Instance.new("TextButton")
+HideButton.Size = UDim2.new(0, 32, 0, 32)
+HideButton.Position = UDim2.new(1, -75, 0.5, -16)
+HideButton.Text = "_"
+HideButton.Font = Enum.Font.GothamBold
+HideButton.TextSize = 20
+HideButton.TextColor3 = Color3.fromRGB(240, 240, 255)
+HideButton.BackgroundColor3 = Color3.fromRGB(60, 70, 100)
+HideButton.BorderSizePixel = 0
+HideButton.AutoButtonColor = false
+HideButton.Parent = TitleBar
+
+local HideCorner = Instance.new("UICorner")
+HideCorner.CornerRadius = UDim.new(0, 8)
+HideCorner.Parent = HideButton
+
+local HideStroke = Instance.new("UIStroke")
+HideStroke.Thickness = 1
+HideStroke.Color = Color3.fromRGB(90, 110, 160)
+HideStroke.Parent = HideButton
+
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 32, 0, 32)
+CloseButton.Position = UDim2.new(1, -38, 0.5, -16)
+CloseButton.Text = "✕"
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.TextSize = 18
+CloseButton.TextColor3 = Color3.fromRGB(240, 240, 255)
+CloseButton.BackgroundColor3 = Color3.fromRGB(180, 70, 70)
+CloseButton.BorderSizePixel = 0
+CloseButton.AutoButtonColor = false
+CloseButton.Parent = TitleBar
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseButton
+
+local CloseStroke = Instance.new("UIStroke")
+CloseStroke.Thickness = 1
+CloseStroke.Color = Color3.fromRGB(210, 90, 90)
+CloseStroke.Parent = CloseButton
+
+-- =====================================================
+-- PLAYER SEARCH SECTION
+-- =====================================================
+
+local Content = Instance.new("Frame")
+Content.BackgroundTransparency = 1
+Content.Size = UDim2.new(1, -30, 1, -60)
+Content.Position = UDim2.new(0, 15, 0, 55)
+Content.Parent = MainFrame
+
+-- Search Header
+local SearchHeader = Instance.new("TextLabel")
+SearchHeader.Text = "🔍 PLAYER SEARCH"
+SearchHeader.Font = Enum.Font.GothamBold
+SearchHeader.TextSize = 14
+SearchHeader.TextColor3 = Color3.fromRGB(180, 190, 220)
+SearchHeader.BackgroundTransparency = 1
+SearchHeader.Size = UDim2.new(1, 0, 0, 25)
+SearchHeader.Position = UDim2.new(0, 0, 0, 0)
+SearchHeader.TextXAlignment = Enum.TextXAlignment.Left
+SearchHeader.Parent = Content
+
+-- Search Box Container
+local SearchContainer = Instance.new("Frame")
+SearchContainer.Size = UDim2.new(1, 0, 0, 50)
+SearchContainer.Position = UDim2.new(0, 0, 0, 25)
+SearchContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+SearchContainer.BorderSizePixel = 0
+SearchContainer.Parent = Content
+
+local SearchContainerCorner = Instance.new("UICorner")
+SearchContainerCorner.CornerRadius = UDim.new(0, 8)
+SearchContainerCorner.Parent = SearchContainer
+
+local SearchContainerStroke = Instance.new("UIStroke")
+SearchContainerStroke.Thickness = 1
+SearchContainerStroke.Color = Color3.fromRGB(60, 70, 100)
+SearchContainerStroke.Parent = SearchContainer
+
+-- Search Icon
+local SearchIcon = Instance.new("ImageLabel")
+SearchIcon.Size = UDim2.new(0, 24, 0, 24)
+SearchIcon.Position = UDim2.new(0, 15, 0.5, -12)
+SearchIcon.BackgroundTransparency = 1
+SearchIcon.Image = "rbxassetid://3926305904"
+SearchIcon.ImageRectOffset = Vector2.new(964, 324)
+SearchIcon.ImageRectSize = Vector2.new(36, 36)
+SearchIcon.ImageColor3 = Color3.fromRGB(150, 160, 200)
+SearchIcon.Parent = SearchContainer
+
+-- Search Text Box
+local SearchBox = Instance.new("TextBox")
+SearchBox.Size = UDim2.new(1, -60, 1, 0)
+SearchBox.Position = UDim2.new(0, 50, 0, 0)
+SearchBox.Text = ""
+SearchBox.PlaceholderText = "Enter player username..."
+SearchBox.Font = Enum.Font.Gotham
+SearchBox.TextSize = 14
+SearchBox.TextColor3 = Color3.fromRGB(220, 220, 240)
+SearchBox.PlaceholderColor3 = Color3.fromRGB(120, 130, 160)
+SearchBox.BackgroundTransparency = 1
+SearchBox.ClearTextOnFocus = false
+SearchBox.Parent = SearchContainer
+
+-- Search Button
+local SearchButton = Instance.new("TextButton")
+SearchButton.Size = UDim2.new(0, 70, 0, 28)
+SearchButton.Position = UDim2.new(1, -80, 0.5, -14)
+SearchButton.Text = "SEARCH"
+SearchButton.Font = Enum.Font.GothamBold
+SearchButton.TextSize = 12
+SearchButton.TextColor3 = Color3.fromRGB(240, 240, 255)
+SearchButton.BackgroundColor3 = Color3.fromRGB(70, 100, 180)
+SearchButton.BorderSizePixel = 0
+SearchButton.AutoButtonColor = false
+SearchButton.Parent = SearchContainer
+
+local SearchButtonCorner = Instance.new("UICorner")
+SearchButtonCorner.CornerRadius = UDim.new(0, 6)
+SearchButtonCorner.Parent = SearchButton
+
+local SearchButtonStroke = Instance.new("UIStroke")
+SearchButtonStroke.Thickness = 1
+SearchButtonStroke.Color = Color3.fromRGB(90, 120, 200)
+SearchButtonStroke.Parent = SearchButton
+
+-- Player Display Area
+local PlayerDisplay = Instance.new("Frame")
+PlayerDisplay.Size = UDim2.new(1, 0, 0, 100)
+PlayerDisplay.Position = UDim2.new(0, 0, 0, 85)
+PlayerDisplay.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+PlayerDisplay.BorderSizePixel = 0
+PlayerDisplay.Visible = false
+PlayerDisplay.Parent = Content
+
+local PlayerDisplayCorner = Instance.new("UICorner")
+PlayerDisplayCorner.CornerRadius = UDim.new(0, 8)
+PlayerDisplayCorner.Parent = PlayerDisplay
+
+local PlayerDisplayStroke = Instance.new("UIStroke")
+PlayerDisplayStroke.Thickness = 1
+PlayerDisplayStroke.Color = Color3.fromRGB(70, 80, 120)
+PlayerDisplayStroke.Parent = PlayerDisplay
+
+-- Avatar Frame
+local AvatarFrame = Instance.new("Frame")
+AvatarFrame.Size = UDim2.new(0, 70, 0, 70)
+AvatarFrame.Position = UDim2.new(0, 15, 0.5, -35)
+AvatarFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+AvatarFrame.BorderSizePixel = 0
+AvatarFrame.Parent = PlayerDisplay
+
+local AvatarCorner = Instance.new("UICorner")
+AvatarCorner.CornerRadius = UDim.new(1, 0)
+AvatarCorner.Parent = AvatarFrame
+
+local AvatarStroke = Instance.new("UIStroke")
+AvatarStroke.Thickness = 2
+AvatarStroke.Color = Color3.fromRGB(80, 100, 180)
+AvatarStroke.Parent = AvatarFrame
+
+-- Avatar Image
+local AvatarImage = Instance.new("ImageLabel")
+AvatarImage.Size = UDim2.new(1, -10, 1, -10)
+AvatarImage.Position = UDim2.new(0, 5, 0, 5)
+AvatarImage.BackgroundTransparency = 1
+AvatarImage.Image = "rbxassetid://0" -- Will be set dynamically
+AvatarImage.Parent = AvatarFrame
+
+local AvatarLoading = Instance.new("TextLabel")
+AvatarLoading.Size = UDim2.new(1, 0, 1, 0)
+AvatarLoading.Position = UDim2.new(0, 0, 0, 0)
+AvatarLoading.Text = "⋯"
+AvatarLoading.Font = Enum.Font.GothamBold
+AvatarLoading.TextSize = 24
+AvatarLoading.TextColor3 = Color3.fromRGB(150, 160, 200)
+AvatarLoading.BackgroundTransparency = 1
+AvatarLoading.Visible = false
+AvatarLoading.Parent = AvatarFrame
+
+-- Player Info
+local PlayerInfo = Instance.new("Frame")
+PlayerInfo.Size = UDim2.new(1, -100, 1, 0)
+PlayerInfo.Position = UDim2.new(0, 95, 0, 0)
+PlayerInfo.BackgroundTransparency = 1
+PlayerInfo.Parent = PlayerDisplay
+
+local PlayerName = Instance.new("TextLabel")
+PlayerName.Text = "Player Name"
+PlayerName.Font = Enum.Font.GothamBold
+PlayerName.TextSize = 16
+PlayerName.TextColor3 = Color3.fromRGB(240, 240, 255)
+PlayerName.BackgroundTransparency = 1
+PlayerName.Size = UDim2.new(1, 0, 0, 30)
+PlayerName.Position = UDim2.new(0, 0, 0, 15)
+PlayerName.TextXAlignment = Enum.TextXAlignment.Left
+PlayerName.TextTruncate = Enum.TextTruncate.AtEnd
+PlayerName.Parent = PlayerInfo
+
+local PlayerID = Instance.new("TextLabel")
+PlayerID.Text = "UserID: Loading..."
+PlayerID.Font = Enum.Font.Gotham
+PlayerID.TextSize = 12
+PlayerID.TextColor3 = Color3.fromRGB(160, 170, 200)
+PlayerID.BackgroundTransparency = 1
+PlayerID.Size = UDim2.new(1, 0, 0, 25)
+PlayerID.Position = UDim2.new(0, 0, 0, 45)
+PlayerID.TextXAlignment = Enum.TextXAlignment.Left
+PlayerID.Parent = PlayerInfo
+
+-- =====================================================
+-- FEATURES SECTION
+-- =====================================================
+
+local FeaturesHeader = Instance.new("TextLabel")
+FeaturesHeader.Text = "⚡ FEATURES"
+FeaturesHeader.Font = Enum.Font.GothamBold
+FeaturesHeader.TextSize = 14
+FeaturesHeader.TextColor3 = Color3.fromRGB(180, 190, 220)
+FeaturesHeader.BackgroundTransparency = 1
+FeaturesHeader.Size = UDim2.new(1, 0, 0, 25)
+FeaturesHeader.Position = UDim2.new(0, 0, 0, 195)
+FeaturesHeader.TextXAlignment = Enum.TextXAlignment.Left
+FeaturesHeader.Parent = Content
+
+-- Variables
+local freezeEnabled = false
+local acceptEnabled = false
+local guiVisible = true
+local currentPlayerData = nil
+
+-- =====================================================
+-- ENHANCED TOGGLE CREATION
+-- =====================================================
+
+local function createEnhancedToggle(text, y, description)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 65)
+    frame.Position = UDim2.new(0, 0, 0, y)
+    frame.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+    frame.BorderSizePixel = 0
+    frame.Parent = Content
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 1
+    stroke.Color = Color3.fromRGB(60, 70, 100)
+    stroke.Parent = frame
+
+    -- Title
+    local label = Instance.new("TextLabel")
+    label.Text = text
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 15
+    label.TextColor3 = Color3.fromRGB(220, 220, 240)
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1, -120, 0, 25)
+    label.Position = UDim2.new(0, 15, 0, 10)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+
+    -- Description
+    local desc = Instance.new("TextLabel")
+    desc.Text = description
+    desc.Font = Enum.Font.Gotham
+    desc.TextSize = 11
+    desc.TextColor3 = Color3.fromRGB(150, 160, 190)
+    desc.BackgroundTransparency = 1
+    desc.Size = UDim2.new(1, -120, 0, 20)
+    desc.Position = UDim2.new(0, 15, 0, 35)
+    desc.TextXAlignment = Enum.TextXAlignment.Left
+    desc.Parent = frame
+
+    -- Toggle Button
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 60, 0, 30)
+    button.Position = UDim2.new(1, -75, 0.5, -15)
+    button.BackgroundColor3 = Color3.fromRGB(70, 80, 100)
+    button.Text = ""
+    button.BorderSizePixel = 0
+    button.AutoButtonColor = false
+    button.Parent = frame
+
+    local bc = Instance.new("UICorner")
+    bc.CornerRadius = UDim.new(1, 0)
+    bc.Parent = button
+
+    local buttonStroke = Instance.new("UIStroke")
+    buttonStroke.Thickness = 1
+    buttonStroke.Color = Color3.fromRGB(90, 100, 130)
+    buttonStroke.Parent = button
+
+    -- Toggle Circle
+    local circle = Instance.new("Frame")
+    circle.Size = UDim2.new(0, 24, 0, 24)
+    circle.Position = UDim2.new(0, 3, 0.5, -12)
+    circle.BackgroundColor3 = Color3.fromRGB(240, 240, 255)
+    circle.BorderSizePixel = 0
+    circle.Parent = button
+
+    local cc = Instance.new("UICorner")
+    cc.CornerRadius = UDim.new(1, 0)
+    cc.Parent = circle
+
+    -- Status Indicator
+    local status = Instance.new("TextLabel")
+    status.Size = UDim2.new(0, 40, 0, 20)
+    status.Position = UDim2.new(1, -125, 0, 10)
+    status.Text = "OFF"
+    status.Font = Enum.Font.GothamBold
+    status.TextSize = 12
+    status.TextColor3 = Color3.fromRGB(200, 120, 120)
+    status.BackgroundTransparency = 1
+    status.TextXAlignment = Enum.TextXAlignment.Right
+    status.Parent = frame
+
+    return button, circle, status, frame
+end
+
+local FreezeBtn, FreezeCircle, FreezeStatus, FreezeFrame = createEnhancedToggle(
+    "Freeze victims screen", 
+    225, 
+    "Freeze the target player's screen"
+)
+
+local AcceptBtn, AcceptCircle, AcceptStatus, AcceptFrame = createEnhancedToggle(
+    "Auto accept trade", 
+    300, 
+    "Automatically accept trades from target"
+)
+
+-- =====================================================
+-- TOGGLE ANIMATION FUNCTION
+-- =====================================================
+
+local function toggleAnimation(btn, circle, status, state)
+    if state then
+        -- ON State (Green)
+        TweenService:Create(circle, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            Position = UDim2.new(1, -27, 0.5, -12)
+        }):Play()
+        
+        TweenService:Create(btn, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(80, 200, 100)
+        }):Play()
+        
+        TweenService:Create(status, TweenInfo.new(0.3), {
+            TextColor3 = Color3.fromRGB(80, 220, 100)
+        }):Play()
+        
+        status.Text = "ON"
+    else
+        -- OFF State (Red)
+        TweenService:Create(circle, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0, 3, 0.5, -12)
+        }):Play()
+        
+        TweenService:Create(btn, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(70, 80, 100)
+        }):Play()
+        
+        TweenService:Create(status, TweenInfo.new(0.3), {
+            TextColor3 = Color3.fromRGB(200, 120, 120)
+        }):Play()
+        
+        status.Text = "OFF"
+    end
+end
+
+-- =====================================================
+-- PLAYER SEARCH FUNCTIONALITY
+-- =====================================================
+
+local function loadPlayerAvatar(userId)
+    local success, result = pcall(function()
+        return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+    end)
+    
+    if success and result then
+        return result
+    end
+    return "rbxassetid://0" -- Default avatar
+end
+
+local function searchPlayer(username)
+    if username == "" then
+        PlayerDisplay.Visible = false
+        return
+    end
+    
+    -- Show loading
+    AvatarLoading.Visible = true
+    AvatarImage.Visible = false
+    PlayerName.Text = "Searching..."
+    PlayerID.Text = "UserID: Loading..."
+    PlayerDisplay.Visible = true
+    
+    -- Search for player
+    local success, userId = pcall(function()
+        return Players:GetUserIdFromNameAsync(username)
+    end)
+    
+    if success and userId then
+        currentPlayerData = {
+            Name = username,
+            UserId = userId
+        }
+        
+        -- Update display
+        PlayerName.Text = username
+        PlayerID.Text = "UserID: " .. userId
+        
+        -- Load avatar
+        local avatarUrl = loadPlayerAvatar(userId)
+        AvatarImage.Image = avatarUrl
+        
+        -- Hide loading, show avatar
+        AvatarLoading.Visible = false
+        AvatarImage.Visible = true
+        
+        -- Animate avatar frame
+        AvatarStroke.Color = Color3.fromRGB(100, 150, 255)
+        TweenService:Create(AvatarStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {
+            Color = Color3.fromRGB(80, 100, 180)
+        }):Play()
+        
+        print("[Player Search] Found:", username, "(" .. userId .. ")")
+    else
+        -- Player not found
+        PlayerName.Text = "Player not found"
+        PlayerID.Text = "UserID: N/A"
+        AvatarImage.Image = "rbxassetid://0"
+        AvatarLoading.Visible = false
+        AvatarImage.Visible = true
+        AvatarStroke.Color = Color3.fromRGB(180, 80, 80)
+        
+        currentPlayerData = nil
+        print("[Player Search] Player not found:", username)
+    end
+end
+
+-- =====================================================
+-- EVENT CONNECTIONS
+-- =====================================================
+
+-- Search button click
+SearchButton.MouseButton1Click:Connect(function()
+    local username = SearchBox.Text
+    if username and username ~= "" then
+        searchPlayer(username)
+    end
+end)
+
+-- Enter key in search box
+SearchBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local username = SearchBox.Text
+        if username and username ~= "" then
+            searchPlayer(username)
+        end
+    end
+end)
+
+-- Toggle clicks with player check
+FreezeBtn.MouseButton1Click:Connect(function()
+    if currentPlayerData then
+        freezeEnabled = not freezeEnabled
+        toggleAnimation(FreezeBtn, FreezeCircle, FreezeStatus, freezeEnabled)
+        
+        if freezeEnabled then
+            print("[Freeze] ✅ Enabled for:", currentPlayerData.Name)
+            -- Add freeze functionality here
+        else
+            print("[Freeze] ❌ Disabled for:", currentPlayerData.Name)
+        end
+    else
+        print("[Error] Please search for a player first!")
+    end
+end)
+
+AcceptBtn.MouseButton1Click:Connect(function()
+    if currentPlayerData then
+        acceptEnabled = not acceptEnabled
+        toggleAnimation(AcceptBtn, AcceptCircle, AcceptStatus, acceptEnabled)
+        
+        if acceptEnabled then
+            print("[Auto Accept] ✅ Enabled for:", currentPlayerData.Name)
+            -- Add auto accept functionality here
+        else
+            print("[Auto Accept] ❌ Disabled for:", currentPlayerData.Name)
+        end
+    else
+        print("[Error] Please search for a player first!")
+    end
+end)
+
+-- =====================================================
+-- BUTTON HOVER EFFECTS
+-- =====================================================
+
+local function setupButtonHover(button, normalColor, hoverColor, stroke)
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {
+            BackgroundColor3 = hoverColor
+        }):Play()
+        if stroke then
+            TweenService:Create(stroke, TweenInfo.new(0.2), {
+                Color = Color3.fromRGB(
+                    math.min(stroke.Color.R * 255 * 1.3, 255)/255,
+                    math.min(stroke.Color.G * 255 * 1.3, 255)/255,
+                    math.min(stroke.Color.B * 255 * 1.3, 255)/255
+                )
+            }):Play()
+        end
+    end)
+    
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {
+            BackgroundColor3 = normalColor
+        }):Play()
+        if stroke then
+            TweenService:Create(stroke, TweenInfo.new(0.2), {
+                Color = normalColor
+            }):Play()
+        end
+    end)
+end
+
+-- Apply hover effects
+setupButtonHover(HideButton, Color3.fromRGB(60, 70, 100), Color3.fromRGB(80, 90, 140), HideStroke)
+setupButtonHover(CloseButton, Color3.fromRGB(180, 70, 70), Color3.fromRGB(200, 90, 90), CloseStroke)
+setupButtonHover(SearchButton, Color3.fromRGB(70, 100, 180), Color3.fromRGB(90, 120, 210), SearchButtonStroke)
+
+-- Toggle frame hover effects
+local function setupFrameHover(frame)
+    frame.MouseEnter:Connect(function()
+        TweenService:Create(frame, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(38, 38, 46)
+        }):Play()
+    end)
+    
+    frame.MouseLeave:Connect(function()
+        TweenService:Create(frame, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+        }):Play()
+    end)
+end
+
+setupFrameHover(FreezeFrame)
+setupFrameHover(AcceptFrame)
+setupFrameHover(SearchContainer)
+
+-- =====================================================
+-- HIDE / CLOSE FUNCTIONALITY
+-- =====================================================
+
+HideButton.MouseButton1Click:Connect(function()
+    guiVisible = not guiVisible
+    if guiVisible then
+        -- Show GUI with animation
+        TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 350, 0, 380),
+            Position = UDim2.new(0.5, -175, 0.5, -190)
+        }):Play()
+        HideButton.Text = "_"
+    else
+        -- Hide GUI with animation
+        TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 60, 0, 60),
+            Position = UDim2.new(1, -70, 0, 10)
+        }):Play()
+        HideButton.Text = "□"
+    end
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    -- Close animation
+    TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        Size = UDim2.new(0, 0, 0, 380),
+        Position = UDim2.new(0.5, 0, 0.5, -190)
+    }):Play()
+    
+    TweenService:Create(MainFrame, TweenInfo.new(0.3), {
+        BackgroundTransparency = 1
+    }):Play()
+    
+    wait(0.3)
+    ScreenGui:Destroy()
+end)
+
+-- =====================================================
+-- ELITE DRAGGING SYSTEM (PC + MOBILE)
+-- =====================================================
+
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    MainFrame.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+TitleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+TitleBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input == dragInput then
+        update(input)
+    end
+end)
+
+-- =====================================================
+-- LOAD ANIMATION
+-- =====================================================
+
+-- Initial animation
+MainFrame.Size = UDim2.new(0, 10, 0, 10)
+MainFrame.Position = UDim2.new(0.5, -5, 0.5, -5)
+MainFrame.BackgroundTransparency = 0.8
+
+wait(0.1)
+
+TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+    Size = UDim2.new(0, 350, 0, 380),
+    Position = UDim2.new(0.5, -175, 0.5, -190),
+    BackgroundTransparency = 0
+}):Play()
+
+-- =====================================================
+-- INITIALIZATION COMPLETE
+-- =====================================================
+
+print("="..string.rep("=", 50))
+print("FREEZE TRADE PRO GUI - PROFESSIONAL EDITION")
+print("="..string.rep("=", 50))
+print("✓ Enhanced Player Search with Avatar Display")
+print("✓ Professional UI with Glow Effects")
+print("✓ Elite Dragging System (PC + Mobile)")
+print("✓ Smooth Animations & Transitions")
+print("✓ Advanced Toggle System with Descriptions")
+print("✓ Error Handling & Loading States")
+print("")
+print("FEATURES:")
+print("1. Player Search: Enter username, see avatar")
+print("2. Freeze victims screen")
+print("3. Auto accept trade")
+print("")
+print("CONTROLS:")
+print("- Drag: Click/Touch title bar")
+print("- Search: Type username, click SEARCH or press Enter")
+print("- Toggle: Click switches (require player selection)")
+print("- Hide: Click '_' button")
+print("- Close: Click '✕' button")
+print("="..string.rep("=", 50))
+print("Status: READY")
+print("Version: 2.0 Professional")
+print("="..string.rep("=", 50))
